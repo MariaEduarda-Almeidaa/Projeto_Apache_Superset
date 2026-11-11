@@ -29,13 +29,31 @@ Clique em **Test Connection** e depois **Connect**. Use `db` como host: é o nom
 Vá em **Data → Datasets → + Dataset**. Selecione o banco conectado, schema `public` e view `resumo_vendas`. Salve.
 
 ## 4. Criar quatro gráficos
-Em **Charts → + Chart**, selecione `resumo_vendas`:
-- **Faturamento por mês:** gráfico de barras temporal; coluna `data_venda`; métrica `SUM(faturamento)`; granularidade mensal.
-- **Faturamento por categoria:** barras ou pizza; dimensão `categoria`; métrica `SUM(faturamento)`.
-- **Faturamento por região:** barras; dimensão `regiao`; métrica `SUM(faturamento)`.
-- **Quantidade por produto:** barras; dimensão `produto`; métrica `SUM(quantidade)`.
+Em **Charts → + Chart**, escolha o dataset `resumo_vendas`, selecione o tipo de gráfico e clique em **Create new chart**.
 
-Salve os gráficos. Depois abra **Dashboards → + Dashboard**, nomeie `Visão Geral de Vendas`, adicione os quatro gráficos e salve.
+### 4.1 Faturamento por mês
+1. Tipo: **Bar Chart**. Na aba **Data**:
+2. **X-axis:** arraste `data_venda`.
+3. **Time grain:** `Month`.
+4. **Metrics:** clique no campo → aba **Simple** → coluna `faturamento`, agregado `SUM` → **Save**.
+5. Clique em **Update chart** (ou **Create chart**) e confira o gráfico.
+6. Clique em **Save**, nomeie `Faturamento por mês` e, em **Add to dashboard**, digite `Visão Geral de Vendas` para criar o dashboard já nesse passo.
+
+### 4.2 Os outros três gráficos
+Repita o processo (**Charts → + Chart** → `resumo_vendas`), mudando apenas estes campos:
+
+| Gráfico | Tipo | X-axis | Metrics |
+|---|---|---|---|
+| Faturamento por categoria | Bar Chart (ou Pie Chart*) | `categoria` | `SUM(faturamento)` |
+| Faturamento por região | Bar Chart | `regiao` | `SUM(faturamento)` |
+| Quantidade por produto | Bar Chart | `produto` | `SUM(quantidade)` |
+
+Ao salvar cada gráfico, escolha o dashboard `Visão Geral de Vendas` em **Add to dashboard**.
+
+### 4.3 Montar o dashboard
+Abra **Dashboards → Visão Geral de Vendas**, clique em **Edit dashboard**, arraste/organize os quatro gráficos e clique em **Save**.
+
+> Se a opção `Month` não aparecer em **Time grain**: em **Data → Datasets**, edite `resumo_vendas`, aba **Columns**, e marque **Is temporal** em `data_venda`.
 
 ## 5. Demonstração SQL
 No **SQL Lab → SQL Editor**, selecione o banco `vendas` e execute:
@@ -63,15 +81,3 @@ Para apagar também os dados persistidos:
 ```bash
 docker compose down -v
 ```
-## Problemas comuns
-| Sintoma | Solução |
-|---|---|
-| `port is already allocated` | Outra aplicação usa 8088 ou 5433. Feche-a ou troque a porta à esquerda em `ports:` no `docker-compose.yml`. |
-| Página não abre logo após o `up` | O Superset ainda está iniciando. Espere 1–3 min e veja `docker compose logs -f superset`. |
-| Banco `vendas` não existe / view `resumo_vendas` ausente | O `init.sql` só roda na 1ª criação do volume. Rode `docker compose down -v` e depois `docker compose up --build -d`. |
-| `Could not load database driver: PostgresDialect_psycopg2` | O build do driver falhou. Rode `docker compose build --no-cache`. |
-| Erro de conexão ao testar o banco | Use host `db` (não `localhost`) na URI. |
-
-Dica para a apresentação: suba o ambiente e faça todo o passo a passo **antes** de apresentar; durante a defesa só mostre.
-
-Dados fictícios. Não exponha o ambiente na internet; as credenciais e a chave são apenas para uso local. A primeira instalação pode levar alguns minutos.
