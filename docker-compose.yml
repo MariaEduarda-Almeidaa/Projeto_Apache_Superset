@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16
+    container_name: demo_superset_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset_demo
+      POSTGRES_DB: superset_meta
+    ports: ["5433:5432"]   # porta 5433 no seu PC para não conflitar com um Postgres local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset_meta"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  superset:
+    build: .
+    container_name: demo_superset_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Chave de 42+ caracteres, somente para demonstração local.
+      SUPERSET_SECRET_KEY: "demo-local-chave-secreta-longa-nao-usar-em-producao-2026"
+      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://superset:superset_demo@db:5432/superset_meta"
+      ADMIN_USERNAME: admin
+      ADMIN_FIRST_NAME: Demo
+      ADMIN_LAST_NAME: Superset
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin123
+    ports: ["8088:8088"]
+    command: >
+      /bin/bash -c "superset db upgrade &&
+      (superset fab create-admin --username $$ADMIN_USERNAME
+      --firstname $$ADMIN_FIRST_NAME --lastname $$ADMIN_LAST_NAME
+      --email $$ADMIN_EMAIL --password $$ADMIN_PASSWORD || true) &&
+      superset init && /usr/bin/run-server.sh"
+
+volumes:
+  postgres_data:
